@@ -1,0 +1,88 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+
+  "Description" : "S3 Bucket Template. Updated 03/25/2020",
+
+  "Parameters" : {
+
+    "Environment" : {
+      "Description" : "Current Environment",
+      "Type" : "String",
+      "Default" : "S3"
+    },
+
+    "ClientID" : {
+      "Description" : "ClientID",
+      "Type" : "String",
+      "Default" : "NEW_ClientID"
+    },
+
+    "S3BucketName" : {
+      "Type" : "String",
+      "Description" : "Name for Client S3 Bucket - Must be unique and contain only lowercase letters, numbers, periods (.), and dashes (-).",
+      "Default" : "new-s3-bucket-"
+    },
+
+    "Tag01" : {
+      "Description" : "Tag 01",
+      "Type" : "String",
+      "Default" : "TheFirstTag"
+    },
+
+    "Tag02" : {
+      "Description" : "Tag 02",
+      "Type" : "String",
+      "Default" : "TheSecondTag"
+    }
+
+  },
+
+  "Resources": {
+
+    "S3Bucket" : {
+      "Type" : "AWS::S3::Bucket",
+      "DeletionPolicy": "Delete",
+      "Properties" : {
+        "BucketName" : {"Ref": "S3BucketName" },
+        "Tags" : [ { "Key": "Client", "Value": {"Fn::Sub": "${AWS::StackName}" } },
+          { "Key": "The First Tag", "Value": {"Ref": "Tag01" } },
+          { "Key": "The Second Tag", "Value": {"Ref": "Tag02" } }
+        ]
+      }
+    },
+
+    "BucketPolicy" : {
+      "Type" : "AWS::S3::BucketPolicy",
+      "Properties" : {
+        "Bucket" : {"Ref" : "S3Bucket"},
+        "PolicyDocument": {
+          "Statement":[
+          {
+            "Action":["s3:ListBucket"],
+            "Effect":"Allow",
+            "Resource": { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "S3Bucket" }]]},
+            "Principal":"*"
+          },
+          {
+            "Action":["s3:GetObject","s3:PutObject","s3:DeleteObject"],
+            "Effect":"Allow",
+            "Resource": { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "S3Bucket" } , "/*" ]]},
+            "Principal":"*"
+          }
+          ]
+        }
+      }
+    }
+
+  },
+  "Outputs" : {
+
+    "S3ID" : {
+      "Description" : "S3 Bucket created",
+      "Value" : { "Ref": "S3Bucket" },
+      "Export": { "Name" : "ExportNewS3" }
+    }
+
+  }
+
+}

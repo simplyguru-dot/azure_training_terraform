@@ -1,0 +1,115 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+
+  "Description" : "EFS Template. Updated 03/23/2020",
+
+  "Parameters" : {
+
+    "Environment" : {
+      "Description" : "Current Environment",
+      "Type" : "String",
+      "Default" : "EFS"
+    },
+
+    "ClientID" : {
+      "Description" : "ClientID",
+      "Type" : "String",
+      "Default" : "NEW_ClientID"
+    },
+
+    "vpcID" : {
+      "Description" : "Current VPC ID",
+      "Type" : "String",
+      "Default" : "vpc-07c9e4a5cdecd8543"
+    },
+
+    "SubnetID" : {
+      "Description" : "Current Subnet ID",
+      "Type" : "String",
+      "Default" : "subnet-0eb85bf444800eaa3"
+    },
+
+    "Tag01" : {
+      "Description" : "Tag 01",
+      "Type" : "String",
+      "Default" : "TheFirstTag"
+    },
+
+    "Tag02" : {
+      "Description" : "Tag 02",
+      "Type" : "String",
+      "Default" : "TheSecondTag"
+    }
+
+  },
+
+  "Resources": {
+
+    "EFS": {
+      "Type": "AWS::EFS::FileSystem",
+      "Properties": {
+        "PerformanceMode": "generalPurpose",
+        "FileSystemTags": [ { "Key": "Name", "Value": {"Fn::Sub": "${AWS::StackName}-EFS" } },
+          { "Key": "Client", "Value": {"Fn::Sub": "${AWS::StackName}" } },
+          { "Key": "The First Tag", "Value": {"Ref": "Tag01" } },
+          { "Key": "The Second Tag", "Value": {"Ref": "Tag02" } }
+        ]
+      }
+    },
+
+    "MountTargetSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": { "Ref": "vpcID" },
+        "Tags": [ { "Key": "Name", "Value": {"Fn::Sub": "${AWS::StackName}-EFS-SG" } },
+          { "Key": "Client", "Value": {"Fn::Sub": "${AWS::StackName}" } },
+          { "Key": "The First Tag", "Value": {"Ref": "Tag01" } },
+          { "Key": "The Second Tag", "Value": {"Ref": "Tag02" } }
+        ],
+        "GroupDescription": "Security group for mount target",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "2049",
+            "ToPort": "2049",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+
+    "MountTarget": {
+      "Type": "AWS::EFS::MountTarget",
+      "Properties": {
+        "FileSystemId": { "Ref": "EFS" },
+        "SubnetId": { "Ref": "SubnetID" },
+        "SecurityGroups": [ { "Ref": "MountTargetSecurityGroup" } ]
+      }
+    }
+
+  },
+
+  "Outputs" : {
+
+    "efsID" : {
+      "Description" : "EFS ID",
+      "Value" :  { "Ref": "EFS" },
+      "Export" : { "Name" : {"Fn::Sub": "${AWS::StackName}-ExportEfsID" } }
+    },
+
+
+    "MTsgID" : {
+      "Description" : "Mount Target Security Group ID",
+      "Value" :  { "Ref": "MountTargetSecurityGroup" },
+      "Export" : { "Name" : {"Fn::Sub": "${AWS::StackName}-ExportMtSgID" } }
+    },
+
+    "mtID" : {
+      "Description" : "Mount Target ID",
+      "Value" :  { "Ref": "MountTarget" },
+      "Export" : { "Name" : {"Fn::Sub": "${AWS::StackName}-ExportMTargetID" } }
+    }
+
+  }
+
+}
